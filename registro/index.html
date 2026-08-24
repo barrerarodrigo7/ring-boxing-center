@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atrévete a entrenar diferente — Clase de prueba RING Boxing Center</title>
+<meta name="description" content="Reserva tu clase de prueba en RING Boxing Center. Sedes RING107 y RING91.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,700;0,900;1,900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --negro: #160100;
+    --vino: #320000;
+    --vino-claro: #4a0a05;
+    --oro: #F6C956;
+    --crema: #F7F9E4;
+    --crema-60: rgba(247, 249, 228, 0.6);
+    --crema-30: rgba(247, 249, 228, 0.3);
+    --crema-14: rgba(247, 249, 228, 0.14);
+    --input: #1f0806;
+    --error: #d9482b;
+    --display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+    --body: 'Barlow', 'Helvetica Neue', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--negro);
+    color: var(--crema);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, select { font-family: inherit; }
+
+  /* ---------- Nav ---------- */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+    height: 64px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px;
+    background: linear-gradient(to bottom, rgba(22,1,0,0.95), rgba(22,1,0,0));
+  }
+  .nav img { height: 36px; width: auto; display: block; }
+  .nav .tag {
+    font-family: var(--display); font-weight: 700; font-size: 13px;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--crema-60);
+  }
+
+  /* ---------- Layout ---------- */
+  .wrap { display: grid; grid-template-columns: 5fr 7fr; min-height: 100vh; }
+
+  .panel {
+    position: sticky; top: 0; height: 100vh;
+    background: var(--vino);
+    padding: 112px 56px 56px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    overflow: hidden;
+  }
+  .panel::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 20% 100%, rgba(246,201,86,0.10), transparent 55%);
+    pointer-events: none;
+  }
+  .panel .star {
+    position: absolute; top: 96px; right: -40px; width: 320px; height: 320px;
+    opacity: 0.06; pointer-events: none;
+  }
+  .panel .label {
+    font-family: var(--display); font-weight: 700; font-size: 14px;
+    letter-spacing: 0.22em; text-transform: uppercase; color: var(--oro);
+    display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+  }
+  .panel .label::before { content: ''; width: 28px; height: 2px; background: var(--oro); }
+  .panel h1 {
+    font-family: var(--display); font-weight: 900; font-style: italic;
+    font-size: clamp(56px, 6.2vw, 92px); line-height: 0.88; letter-spacing: -0.01em;
+    text-transform: uppercase; color: var(--crema); margin-bottom: 28px;
+  }
+  .panel h1 .ghost {
+    display: block; color: transparent;
+    -webkit-text-stroke: 1.5px var(--crema-30);
+  }
+  .panel p.desc { font-size: 17px; color: var(--crema-60); max-width: 40ch; margin-bottom: 36px; }
+  .panel ul { list-style: none; display: grid; gap: 12px; }
+  .panel li {
+    font-family: var(--display); font-weight: 700; font-size: 20px; text-transform: uppercase;
+    letter-spacing: 0.04em; display: flex; align-items: baseline; gap: 14px;
+  }
+  .panel li::before { content: '\2605'; color: var(--oro); font-size: 14px; }
+
+  .form-col { padding: 112px 72px 80px; max-width: 760px; }
+
+  /* ---------- Form ---------- */
+  .section { margin-bottom: 44px; }
+  .section-title {
+    font-family: var(--display); font-weight: 900; font-size: 28px; text-transform: uppercase;
+    letter-spacing: 0.02em; padding-bottom: 10px; margin-bottom: 22px;
+    border-bottom: 2px solid var(--crema-14); display: flex; align-items: baseline; gap: 12px;
+  }
+  .section-title small {
+    font-family: var(--body); font-weight: 400; font-size: 13px; color: var(--crema-60);
+    text-transform: none; letter-spacing: 0;
+  }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 20px; }
+  .grid .full { grid-column: 1 / -1; }
+  .field label {
+    display: block; font-family: var(--display); font-weight: 700; font-size: 14px;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--crema-60); margin-bottom: 8px;
+  }
+  .field input, .field select {
+    width: 100%; height: 50px; padding: 0 14px;
+    background: var(--input); color: var(--crema);
+    border: 1px solid var(--crema-14); border-radius: 0; font-size: 16px;
+    outline: none; transition: border-color .15s;
+    -webkit-appearance: none; appearance: none;
+  }
+  .field input::placeholder { color: var(--crema-30); }
+  .field input:focus, .field select:focus { border-color: var(--oro); }
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23F6C956' stroke-width='2'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
+  }
+  .field select option { background: var(--input); color: var(--crema); }
+  .field input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1) sepia(1) saturate(4) hue-rotate(5deg); opacity: .8; }
+  .field.invalid input, .field.invalid select { border-color: var(--error); }
+  .err { display: none; color: var(--error); font-size: 13px; margin-top: 6px; }
+  .field.invalid .err, .choice.invalid .err { display: block; }
+
+  .phone { display: grid; grid-template-columns: 120px 1fr; gap: 10px; }
+
+  /* Choice cards (género, sede, hora) */
+  .choice .options { display: grid; gap: 10px; }
+  .choice.tres .options { grid-template-columns: repeat(3, 1fr); }
+  .choice.dos .options { grid-template-columns: repeat(2, 1fr); }
+  .choice.horas .options { grid-template-columns: repeat(3, 1fr); }
+  .opt {
+    height: 54px; border: 1px solid var(--crema-14); background: var(--input);
+    color: var(--crema); cursor: pointer; border-radius: 0;
+    font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: 0.06em;
+    text-transform: uppercase; transition: border-color .15s, background .15s, color .15s;
+  }
+  .opt:hover { border-color: var(--crema-60); }
+  .opt:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; }
+  .opt.on { background: var(--oro); color: var(--vino); border-color: var(--oro); }
+  .choice.tres .opt { height: 44px; font-size: 14px; font-weight: 700; letter-spacing: .1em; }
+  .opt.sede { height: 72px; font-size: 26px; font-weight: 900; font-style: italic; }
+  .opt.sede span { display: block; font-size: 12px; font-style: normal; font-weight: 500; letter-spacing: 0.16em; opacity: .7; }
+  .choice.invalid .opt { border-color: var(--error); }
+
+  .hidden { display: none !important; }
+  .hint { font-size: 14px; color: var(--crema-60); margin-top: 10px; }
+  .hint.loading::before { content: ''; display: inline-block; width: 12px; height: 12px; margin-right: 8px; border: 2px solid var(--crema-30); border-top-color: var(--oro); border-radius: 50%; vertical-align: -2px; animation: spin .8s linear infinite; }
+
+  /* Términos */
+  .terms { display: flex; align-items: flex-start; gap: 14px; cursor: pointer; }
+  .terms .box {
+    flex: none; width: 22px; height: 22px; margin-top: 2px;
+    border: 1px solid var(--crema-30); background: var(--input); position: relative;
+  }
+  .terms .box.checked { background: var(--oro); border-color: var(--oro); }
+  .terms .box.checked::after {
+    content: ''; position: absolute; left: 7px; top: 3px; width: 6px; height: 11px;
+    border: solid var(--vino); border-width: 0 2.5px 2.5px 0; transform: rotate(45deg);
+  }
+  .terms p { font-size: 15px; color: var(--crema-60); }
+  .terms p b { color: var(--crema); font-weight: 600; border-bottom: 1px solid var(--oro); }
+  .terms-wrap.invalid .box { border-color: var(--error); }
+  .terms-wrap .err { margin-left: 36px; }
+
+  .submit {
+    width: 100%; height: 64px; margin-top: 12px;
+    background: var(--oro); color: var(--vino); border: none; border-radius: 0; cursor: pointer;
+    font-family: var(--display); font-weight: 900; font-style: italic; font-size: 26px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    display: flex; align-items: center; justify-content: center; gap: 14px;
+    transition: background .15s;
+  }
+  .submit:hover { background: #ffd66a; }
+  .submit:disabled { opacity: .6; cursor: default; }
+  .submit .spin { width: 20px; height: 20px; border: 3px solid rgba(50,0,0,.3); border-top-color: var(--vino); border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Éxito */
+  .success { text-align: center; padding: 60px 0; }
+  .success .star-big { width: 72px; height: 72px; margin: 0 auto 28px; }
+  .success h2 {
+    font-family: var(--display); font-weight: 900; font-style: italic; font-size: 64px;
+    line-height: .9; text-transform: uppercase; margin-bottom: 18px;
+  }
+  .success h2 span { color: var(--oro); }
+  .success p { color: var(--crema-60); max-width: 44ch; margin: 0 auto 32px; }
+  .success .resumen {
+    display: inline-grid; grid-template-columns: auto auto; gap: 6px 24px; text-align: left;
+    font-family: var(--display); font-size: 18px; text-transform: uppercase; letter-spacing: .04em;
+    border-left: 2px solid var(--oro); padding-left: 18px; margin-bottom: 36px;
+  }
+  .success .resumen span:nth-child(odd) { color: var(--crema-60); font-weight: 500; }
+  .success .resumen span:nth-child(even) { font-weight: 900; }
+  .wa {
+    display: inline-flex; align-items: center; gap: 12px; height: 58px; padding: 0 32px;
+    background: var(--oro); color: var(--vino); text-decoration: none;
+    font-family: var(--display); font-weight: 900; font-size: 22px; letter-spacing: .06em; text-transform: uppercase;
+  }
+
+  /* Modal */
+  .modal { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; padding: 24px; }
+  .modal.open { display: flex; }
+  .modal .bg { position: absolute; inset: 0; background: rgba(22,1,0,.85); backdrop-filter: blur(8px); }
+  .modal .card {
+    position: relative; width: 100%; max-width: 720px; max-height: 86vh; display: flex; flex-direction: column;
+    background: var(--vino); border: 1px solid var(--crema-14);
+  }
+  .modal .head { padding: 24px 28px; border-bottom: 1px solid var(--crema-14); display: flex; justify-content: space-between; align-items: center; }
+  .modal .head h3 { font-family: var(--display); font-weight: 900; font-size: 30px; text-transform: uppercase; }
+  .modal .x { background: none; border: none; color: var(--crema); font-size: 28px; cursor: pointer; line-height: 1; }
+  .modal .bodytext { padding: 28px; overflow-y: auto; font-size: 15px; color: var(--crema-60); }
+  .modal .bodytext h4 { font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: .1em; text-transform: uppercase; color: var(--oro); margin: 22px 0 8px; }
+  .modal .bodytext h4:first-child { margin-top: 0; }
+  .modal .bodytext p { margin-bottom: 12px; }
+  .modal .bodytext strong { color: var(--crema); font-weight: 600; }
+  .modal .foot { padding: 20px 28px; border-top: 1px solid var(--crema-14); }
+  .modal .foot button {
+    width: 100%; height: 56px; background: var(--oro); color: var(--vino); border: none; cursor: pointer;
+    font-family: var(--display); font-weight: 900; font-size: 22px; letter-spacing: .06em; text-transform: uppercase;
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 900px) {
+    .wrap { grid-template-columns: 1fr; }
+    .panel { position: relative; height: auto; padding: 100px 28px 40px; }
+    .panel h1 { font-size: 64px; }
+    .form-col { padding: 44px 28px 60px; max-width: none; }
+    .nav { padding: 0 20px; }
+  }
+  @media (max-width: 480px) {
+    .grid { grid-template-columns: 1fr; }
+    .choice.tres .options { grid-template-columns: 1fr; }
+    .choice.tres .opt { height: 42px; }
+    .phone { grid-template-columns: 96px 1fr; }
+    .choice.horas .options { grid-template-columns: repeat(2, 1fr); }
+    .form-col { padding: 36px 20px 60px; }
+    .panel { padding: 88px 20px 36px; }
+    .panel h1 { font-size: 44px; }
+    .nav { position: absolute; background: none; }
+    .nav .tag { display: none; }
+    .choice.dos .options { grid-template-columns: 1fr; }
+    .opt.sede { height: 64px; font-size: 24px; }
+    .opt.sede span { font-size: 11px; }
+    .success h2 { font-size: 48px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <img src="./assets/ring-logo-crema.png" alt="RING Boxing Center">
+  <span class="tag">Clase de prueba</span>
+</nav>
+
+<div class="wrap">
+  <aside class="panel">
+    <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path fill="#F7F9E4" d="M12 1.5l3.1 6.6 7.2.9-5.3 5 1.4 7.2L12 17.7l-6.4 3.5 1.4-7.2-5.3-5 7.2-.9z"/></svg>
+    <div class="label">Primera clase</div>
+    <h1>Atrévete<span class="ghost">a entrenar diferente.</span></h1>
+    <p class="desc">Una clase completa de boxeo con nuestro equipo, en la sede que te quede mejor. Sin experiencia previa, sin compromiso. Solo tienes que llegar.</p>
+    <ul>
+      <li>Guantes y vendas incluidos en tu primera clase</li>
+      <li>Grupos reducidos, técnica desde el minuto uno</li>
+      <li>Dos sedes: RING107 y RING91</li>
+    </ul>
+  </aside>
+
+  <main class="form-col">
+    <div id="form">
+
+      <div class="section">
+        <div class="section-title">Tus datos</div>
+        <div class="grid">
+          <div class="field"><label for="nombre">Nombre</label><input id="nombre" type="text" autocomplete="given-name"><div class="err">Escribe tu nombre</div></div>
+          <div class="field"><label for="apellido">Apellido</label><input id="apellido" type="text" autocomplete="family-name"><div class="err">Escribe tu apellido</div></div>
+          <div class="field"><label for="tipo_doc">Tipo de documento</label>
+            <select id="tipo_doc"><option value="">Elige</option><option>CC</option><option>CE</option><option>Pasaporte</option><option>NIT</option></select>
+            <div class="err">Elige un tipo de documento</div></div>
+          <div class="field"><label for="num_doc">Número de documento</label><input id="num_doc" type="text" inputmode="numeric" placeholder="Sin puntos ni espacios"><div class="err">Solo números, sin espacios</div></div>
+          <div class="field full choice tres" id="genero_wrap">
+            <label>Género</label>
+            <div class="options">
+              <button type="button" class="opt" data-value="M">Masculino</button>
+              <button type="button" class="opt" data-value="F">Femenino</button>
+              <button type="button" class="opt" data-value="Prefiero no decir">Prefiero no decir</button>
+            </div>
+            <div class="err">Elige una opción</div>
+          </div>
+          <div class="field"><label for="fecha_nac">Fecha de nacimiento</label><input id="fecha_nac" type="date"><div class="err">Elige tu fecha de nacimiento</div></div>
+          <div class="field"><label for="como_llegaste">Cómo llegaste a RING</label>
+            <select id="como_llegaste"><option value="">Elige</option><option>Instagram</option><option>Página web</option><option>Facebook</option><option>Pasé caminando</option><option>Me recomendaron</option></select>
+            <div class="err">Cuéntanos cómo llegaste</div></div>
+          <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="email" placeholder="tu@correo.com"><div class="err">Revisa el formato del correo</div></div>
+          <div class="field"><label for="celular">Celular</label>
+            <div class="phone">
+              <select id="indicativo"><option value="+57">+57</option><option value="+1">+1</option><option value="+34">+34</option><option value="+52">+52</option><option value="+58">+58</option></select>
+              <input id="celular" type="tel" inputmode="numeric" placeholder="3001234567">
+            </div>
+            <div class="err">Solo números, entre 7 y 15 dígitos</div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Tu clase <small>Elige sede, día y hora</small></div>
+        <div class="grid">
+          <div class="field full choice dos" id="sede_wrap">
+            <label>Sede</label>
+            <div class="options" id="sede_opts"></div>
+            <div class="hint loading" id="sede_hint">Cargando sedes y horarios</div>
+            <div class="err">Elige una sede</div>
+          </div>
+          <div class="field full hidden" id="dia_wrap">
+            <label for="dia">Día</label>
+            <select id="dia"><option value="">Elige un día</option></select>
+            <div class="err">Elige un día</div>
+          </div>
+          <div class="field full choice horas hidden" id="hora_wrap">
+            <label>Hora</label>
+            <div class="options" id="hora_opts"></div>
+            <div class="err">Elige una hora</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section terms-wrap" id="terms_wrap">
+        <div class="terms" id="terms_open" role="checkbox" aria-checked="false" tabindex="0">
+          <div class="box" id="terms_box"></div>
+          <p>He leído y acepto el <b>consentimiento informado y el tratamiento de datos</b> de Caoba Fitness SAS.</p>
+        </div>
+        <div class="err">Debes leer y aceptar los términos</div>
+      </div>
+
+      <button type="button" class="submit" id="submit">Reservar mi clase</button>
+    </div>
+
+    <div id="success" class="success hidden">
+      <svg class="star-big" viewBox="0 0 24 24" aria-hidden="true"><path fill="#F6C956" d="M12 1.5l3.1 6.6 7.2.9-5.3 5 1.4 7.2L12 17.7l-6.4 3.5 1.4-7.2-5.3-5 7.2-.9z"/></svg>
+      <h2>Quedaste<br><span>anotado.</span></h2>
+      <p>Te esperamos en la sede que elegiste. Llega 10 minutos antes y confírmanos por WhatsApp para dejarte el cupo listo.</p>
+      <div class="resumen" id="resumen"></div>
+      <div><a class="wa" id="wa_link" href="#" target="_blank" rel="noopener">Confirmar por WhatsApp</a></div>
+    </div>
+  </main>
+</div>
+
+<div class="modal" id="modal" aria-modal="true" role="dialog">
+  <div class="bg" id="modal_bg"></div>
+  <div class="card">
+    <div class="head"><h3>Consentimiento informado<small style="display:block;font-family:var(--body);font-weight:400;font-size:13px;letter-spacing:0;text-transform:none;color:var(--crema-60)">Caoba Fitness SAS — Términos y condiciones</small></h3><button class="x" id="modal_x" aria-label="Cerrar">&times;</button></div>
+    <div class="bodytext">
+      <h4>Considerando</h4>
+      <p>CAOBA FITNESS SAS presta OTROS SERVICIOS ESPECIALES DE SALUD en los establecimientos denominados CAOBA FITNESS, CAOBA RING 107, CAOBA RING 91 y CAOBA RING ZONA G.</p>
+      <p>Las actividades físicas que se desarrollan al interior de dichos establecimientos requieren ESFUERZOS FÍSICOS IMPORTANTES que conllevan ALTOS RIESGOS de sufrir daños en la salud de la persona quien ejercita, en este caso EL AFILIADO.</p>
+      <h4>Manifestaciones del afiliado</h4>
+      <p>El AFILIADO manifiesta que está en óptimas condiciones físicas y mentales para gozar de los servicios de CAOBA FITNESS.</p>
+      <p>El AFILIADO es el único y directo responsable de adelantar los exámenes y valoraciones médicas que corroboren dicha condición.</p>
+      <p>El AFILIADO manifiesta que conoce y acepta los ALTOS RIESGOS a los que se somete por adelantar actividades físicas y deportivas al interior de los establecimientos de CAOBA FITNESS SAS.</p>
+      <p>El AFILIADO manifiesta que asumirá por su propia cuenta y riesgo todos los daños que sufra en su salud como consecuencia de las actividades físicas que lleve a cabo en dichos establecimientos.</p>
+      <p>EL AFILIADO exonera a CAOBA FITNESS SAS de cualquier responsabilidad que se derive de los daños que sufra en su salud como consecuencia de las actividades físicas realizadas en los establecimientos de CAOBA FITNESS SAS.</p>
+      <p>EL AFILIADO se compromete a comunicar a CAOBA FITNESS SAS cualquier variación en su estado de salud que requiera el uso de corticoides o inmunosupresores.</p>
+      <h4>Tratamiento de datos personales</h4>
+      <p>De acuerdo con la Ley 1581 de 2012 y el Decreto 1377 de 2013, el AFILIADO autoriza expresamente a CAOBA FITNESS SAS para el tratamiento de sus datos personales recolectados con ocasión del presente contrato, para fines administrativos, comerciales, de publicidad, servicio al cliente, contacto, y para los siguientes propósitos: comunicación sobre productos, servicios, ofertas, promociones y alianzas; provisión y promoción de servicios; cumplimiento de obligaciones con clientes, proveedores y empleados; y evaluación de la calidad de los servicios.</p>
+      <h4>Condiciones particulares</h4>
+      <p><strong>Objeto.</strong> CAOBA FITNESS SAS le prestará al AFILIADO los servicios inherentes a CrossFit o boxeo, Nutrición, Bienestar y Salud en contraprestación al precio estipulado. Este derecho es PERSONAL E INTRANSFERIBLE.</p>
+      <p><strong>Devolución del dinero.</strong> CAOBA FITNESS SAS no realiza devolución de dinero. En caso de incapacidad física que impida el entrenamiento (embarazo, lesiones permanentes, etc.), el AFILIADO podrá suspender o ceder el plan, con perjuicio del tiempo ya utilizado.</p>
+      <p><strong>Obligaciones del afiliado.</strong> El AFILIADO se obliga a: (i) pagar el precio en las condiciones estipuladas; (ii) adelantar actividades físicas de manera prudente según sus capacidades individuales; (iii) responder por daños a instalaciones, equipos, demás afiliados o personal de CAOBA FITNESS SAS; (iv) comunicar variaciones en su estado de salud relacionadas con Diabetes, Enfermedad cardiovascular, Hipertensión Arterial, ACV, VIH, Cáncer, EPOC, malnutrición, o uso de corticoides e inmunosupresores.</p>
+      <p><strong>Obligaciones de CAOBA FITNESS SAS.</strong> CAOBA FITNESS SAS se obliga a: (i) permitir el ingreso del AFILIADO a sus establecimientos; (ii) suministrar equipos y elementos técnicos; (iii) mantener operativos los establecimientos durante la vigencia del contrato; (iv) diseñar rutinas de entrenamiento y contar con personal idóneo en CrossFit o boxeo, Nutrición, Bienestar y Salud.</p>
+    </div>
+    <div class="foot"><button type="button" id="modal_ok">Acepto los términos y condiciones</button></div>
+  </div>
+</div>
+
+<script>
+  // ---------- Configuración (lo único que cambia entre despliegues) ----------
+  const CONFIG = {
+    scriptUrl: 'https://script.google.com/macros/s/AKfycby_2q_30d3eqG5zctz69DnWPykGAstwTK5DiG54yamo9ty2KfoOsdrjrjCIAMQJZSnV0w/exec',
+    whatsapp: { RING107: '573212655674', RING91: '573186702746' },
+    diasAMostrar: 5,
+    sedesInfo: { RING107: 'Carrera 13A # 107A-27', RING91: 'Calle 91 # 15-34 · Drop Padel' }
+  };
+
+  const DIAS_JS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+  const DIAS_LARGO = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+  let SLOTS = {};
+  const state = { genero: '', sede: '', dia: '', hora: '', terminos: false };
+  const $ = id => document.getElementById(id);
+
+  // ---------- Cargar horarios desde la hoja ----------
+  async function cargarHorarios() {
+    const hint = $('sede_hint');
+    try {
+      const r = await fetch(CONFIG.scriptUrl, { method: 'GET' });
+      const j = await r.json();
+      if (j.result !== 'ok') throw new Error(j.message || 'sin datos');
+      SLOTS = j.slots;
+      const sedes = Object.keys(SLOTS);
+      if (!sedes.length) throw new Error('sin sedes');
+      $('sede_opts').innerHTML = sedes.map(s =>
+        `<button type="button" class="opt sede" data-value="${s}">${s}<span>${CONFIG.sedesInfo[s] || ''}</span></button>`
+      ).join('');
+      $('sede_wrap').classList.toggle('dos', sedes.length !== 3);
+      $('sede_wrap').classList.toggle('tres', sedes.length === 3);
+      hint.classList.add('hidden');
+      bindChoice('sede_wrap', 'sede', onSede);
+    } catch (e) {
+      hint.classList.remove('loading');
+      hint.textContent = 'No pudimos cargar los horarios. Recarga la página o escríbenos por WhatsApp.';
+    }
+  }
+
+  // ---------- Selección de sede, día y hora ----------
+  function bindChoice(wrapId, key, cb) {
+    const wrap = $(wrapId);
+    wrap.querySelectorAll('.opt').forEach(b => b.addEventListener('click', () => {
+      wrap.querySelectorAll('.opt').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      state[key] = b.dataset.value;
+      wrap.classList.remove('invalid');
+      if (cb) cb(b.dataset.value);
+    }));
+  }
+
+  function onSede(sede) {
+    state.dia = ''; state.hora = '';
+    const sel = $('dia');
+    sel.innerHTML = '<option value="">Elige un día</option>';
+    const disponibles = proximosDias(sede);
+    disponibles.forEach(d => {
+      const o = document.createElement('option');
+      o.value = d.clave; o.textContent = d.texto; sel.appendChild(o);
+    });
+    $('dia_wrap').classList.remove('hidden');
+    $('hora_wrap').classList.add('hidden');
+    $('hora_opts').innerHTML = '';
+    $('dia_wrap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function proximosDias(sede) {
+    const out = [];
+    const hoy = new Date();
+    const d = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + 1);
+    while (out.length < CONFIG.diasAMostrar && out.length < 60) {
+      const abrev = DIAS_JS[d.getDay()];
+      if (SLOTS[sede] && SLOTS[sede][abrev] && SLOTS[sede][abrev].length) {
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        out.push({ clave: abrev, texto: `${DIAS_LARGO[d.getDay()]} ${dd}/${mm}` });
+      }
+      d.setDate(d.getDate() + 1);
+      if (d - hoy > 1000 * 60 * 60 * 24 * 60) break;
+    }
+    return out;
+  }
+
+  $('dia').addEventListener('change', e => {
+    state.dia = e.target.value; state.hora = '';
+    $('dia_wrap').classList.remove('invalid');
+    const horas = (SLOTS[state.sede] && SLOTS[state.sede][state.dia]) || [];
+    $('hora_opts').innerHTML = horas.map(h => `<button type="button" class="opt" data-value="${h}">${h}</button>`).join('');
+    $('hora_wrap').classList.toggle('hidden', !state.dia);
+    bindChoice('hora_wrap', 'hora');
+  });
+
+  bindChoice('genero_wrap', 'genero');
+
+  // ---------- Términos ----------
+  const modal = $('modal');
+  function abrirModal() { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+  function cerrarModal() { modal.classList.remove('open'); document.body.style.overflow = ''; }
+  $('terms_open').addEventListener('click', abrirModal);
+  $('terms_open').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrirModal(); } });
+  $('modal_x').addEventListener('click', cerrarModal);
+  $('modal_bg').addEventListener('click', cerrarModal);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal(); });
+  $('modal_ok').addEventListener('click', () => {
+    state.terminos = true;
+    $('terms_box').classList.add('checked');
+    $('terms_open').setAttribute('aria-checked', 'true');
+    $('terms_wrap').classList.remove('invalid');
+    cerrarModal();
+  });
+
+  // ---------- Validación ----------
+  function marcar(id, ok) { $(id).closest('.field, .terms-wrap, .choice').classList.toggle('invalid', !ok); return ok; }
+  function validar() {
+    let ok = true;
+    const v = id => $(id).value.trim();
+    ok = marcar('nombre', v('nombre').length > 0) && ok;
+    ok = marcar('apellido', v('apellido').length > 0) && ok;
+    ok = marcar('tipo_doc', v('tipo_doc') !== '') && ok;
+    ok = marcar('num_doc', /^\d{5,15}$/.test(v('num_doc'))) && ok;
+    ok = marcar('fecha_nac', v('fecha_nac') !== '' && v('fecha_nac') <= hoyISO()) && ok;
+    ok = marcar('como_llegaste', v('como_llegaste') !== '') && ok;
+    ok = marcar('email', /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v('email'))) && ok;
+    ok = marcar('celular', /^\d{7,15}$/.test(v('celular'))) && ok;
+    const g = state.genero !== ''; $('genero_wrap').classList.toggle('invalid', !g); ok = g && ok;
+    const s = state.sede !== ''; $('sede_wrap').classList.toggle('invalid', !s); ok = s && ok;
+    const d = state.dia !== ''; $('dia_wrap').classList.toggle('invalid', !d); ok = d && ok;
+    const h = state.hora !== ''; $('hora_wrap').classList.toggle('invalid', !h); ok = h && ok;
+    $('terms_wrap').classList.toggle('invalid', !state.terminos); ok = state.terminos && ok;
+    if (!ok) { const first = document.querySelector('.invalid'); if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    return ok;
+  }
+  function hoyISO() { const t = new Date(); return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`; }
+  $('fecha_nac').max = hoyISO();
+  ['num_doc', 'celular'].forEach(id => $(id).addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, ''); }));
+
+  // ---------- Envío ----------
+  $('submit').addEventListener('click', async () => {
+    if (!validar()) return;
+    const btn = $('submit');
+    btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Enviando';
+    const diaTexto = $('dia').options[$('dia').selectedIndex].text;
+    const payload = {
+      timestamp: new Date().toLocaleString('es-CO'),
+      nombre: $('nombre').value.trim(),
+      apellido: $('apellido').value.trim(),
+      tipo_doc: $('tipo_doc').value,
+      num_doc: $('num_doc').value.trim(),
+      genero: state.genero,
+      fecha_nac: $('fecha_nac').value,
+      email: $('email').value.trim(),
+      celular: $('indicativo').value + $('celular').value.trim(),
+      como_llegaste: $('como_llegaste').value,
+      sede: state.sede,
+      slot: `${state.dia} ${state.hora}`,
+      terminos: 'Aceptado'
+    };
+    try {
+      await fetch(CONFIG.scriptUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
+    } catch (e) { /* no-cors: no hay respuesta legible */ }
+    $('resumen').innerHTML = `<span>Sede</span><span>${state.sede}</span><span>Día</span><span>${diaTexto}</span><span>Hora</span><span>${state.hora}</span>`;
+    const msg = encodeURIComponent(`Hola RING, soy ${payload.nombre} ${payload.apellido}. Reservé mi clase de prueba en ${state.sede} el ${diaTexto} a las ${state.hora}.`);
+    $('wa_link').href = `https://wa.me/${CONFIG.whatsapp[state.sede] || Object.values(CONFIG.whatsapp)[0]}?text=${msg}`;
+    $('form').classList.add('hidden');
+    $('success').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  cargarHorarios();
+</script>
+</body>
+</html>
