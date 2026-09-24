@@ -204,6 +204,17 @@
     font-family: var(--display); font-weight: 900; font-size: 22px; letter-spacing: .06em; text-transform: uppercase;
   }
 
+  /* Aviso de envio no confirmado: rojo de error, no el oro del exito. */
+  .fallo {
+    border: 1px solid var(--error); padding: 20px 22px; margin-bottom: 24px; text-align: center;
+  }
+  .fallo .fallo-t {
+    font-family: var(--display); font-weight: 900; font-size: 22px; text-transform: uppercase;
+    letter-spacing: .04em; color: var(--error); margin-bottom: 8px;
+  }
+  .fallo .fallo-p { color: var(--crema-60); margin-bottom: 18px; }
+  .fallo .wa { height: 48px; font-size: 18px; padding: 0 24px; }
+
   /* Modal */
   .modal { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; padding: 24px; }
   .modal.open { display: flex; }
@@ -338,6 +349,14 @@
         <div class="err">Debes leer y aceptar los términos</div>
       </div>
 
+      <!-- Aviso de envio no confirmado. Va dentro de #form y pegado al boton
+           para que lo escrito siga delante. Oculto hasta que haga falta. -->
+      <div id="fallo" class="fallo hidden" role="alert">
+        <p class="fallo-t">No pudimos confirmar tu reserva.</p>
+        <p class="fallo-p">Escríbenos por WhatsApp y la completamos contigo.</p>
+        <a class="wa" id="wa_fallo" href="#" target="_blank" rel="noopener">Escribirnos por WhatsApp</a>
+      </div>
+
       <button type="button" class="submit" id="submit">Reservar mi clase</button>
     </div>
 
@@ -348,6 +367,7 @@
       <div class="resumen" id="resumen"></div>
       <div><a class="wa" id="wa_link" href="#" target="_blank" rel="noopener">Confirmar por WhatsApp</a></div>
     </div>
+
   </main>
 </div>
 
@@ -515,9 +535,23 @@
   ['num_doc', 'celular'].forEach(id => $(id).addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, ''); }));
 
   // ---------- Envío ----------
+  //
+  // Se espera la respuesta y solo se da por buena si el script contesta
+  // `{result:'ok'}`. Cualquier otra cosa —error de red, HTTP no 2xx, respuesta
+  // ilegible, o pasarse del tiempo— cuenta como no confirmada.
+  //
+  // TOPE_MS: el script puede tardar si reintenta por dentro. 30 s cubre ese
+  // caso con margen; mas alla, se avisa en vez de dejar el boton girando.
+  const TOPE_MS = 30000;
+  let enviando = false;
+
   $('submit').addEventListener('click', async () => {
+    // La bandera ademas del `disabled`: el boton se rehabilita para reintentar.
+    if (enviando) return;
     if (!validar()) return;
+    enviando = true;
     const btn = $('submit');
+    $('fallo').classList.add('hidden');
     btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Enviando';
     const diaTexto = $('dia').options[$('dia').selectedIndex].text;
     const payload = {
@@ -535,15 +569,48 @@
       slot: `${state.dia} ${state.hora}`,
       terminos: 'Aceptado'
     };
+
+    let guardado = false;
+    const corte = new AbortController();
+    const reloj = setTimeout(() => corte.abort(), TOPE_MS);
     try {
-      await fetch(CONFIG.scriptUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
-    } catch (e) { /* no-cors: no hay respuesta legible */ }
-    $('resumen').innerHTML = `<span>Sede</span><span>${state.sede}</span><span>Día</span><span>${diaTexto}</span><span>Hora</span><span>${state.hora}</span>`;
-    const msg = encodeURIComponent(`Hola RING, soy ${payload.nombre} ${payload.apellido}. Reservé mi clase de prueba en ${state.sede} el ${diaTexto} a las ${state.hora}.`);
-    $('wa_link').href = `https://wa.me/${CONFIG.whatsapp[state.sede] || Object.values(CONFIG.whatsapp)[0]}?text=${msg}`;
-    $('form').classList.add('hidden');
-    $('success').classList.remove('hidden');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+      const r = await fetch(CONFIG.scriptUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(payload),
+        signal: corte.signal
+      });
+      if (r.ok) {
+        const j = await r.json();
+        guardado = j.result === 'ok';
+      }
+    } catch (e) {
+      // Red caida, peticion abortada por el tope, o respuesta ilegible.
+    } finally {
+      clearTimeout(reloj);
+    }
+
+    const telefono = CONFIG.whatsapp[state.sede] || Object.values(CONFIG.whatsapp)[0];
+
+    if (guardado) {
+      $('resumen').innerHTML = `<span>Sede</span><span>${state.sede}</span><span>Día</span><span>${diaTexto}</span><span>Hora</span><span>${state.hora}</span>`;
+      const msg = encodeURIComponent(`Hola RING, soy ${payload.nombre} ${payload.apellido}. Reservé mi clase de prueba en ${state.sede} el ${diaTexto} a las ${state.hora}.`);
+      $('wa_link').href = `https://wa.me/${telefono}?text=${msg}`;
+      $('form').classList.add('hidden');
+      $('success').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // Sin confirmacion. El formulario NO se oculta: lo escrito sigue delante y
+    // reintentar es volver a pulsar. El texto del WhatsApp es distinto al de
+    // exito, para que se distinga una cosa de la otra.
+    const msgFallo = encodeURIComponent(`Hola RING, soy ${payload.nombre} ${payload.apellido}. Intenté reservar clase de prueba en ${state.sede} el ${diaTexto} a las ${state.hora}, pero la página NO pudo confirmar mi registro. ¿Me ayudan a completarlo?`);
+    $('wa_fallo').href = `https://wa.me/${telefono}?text=${msgFallo}`;
+    $('fallo').classList.remove('hidden');
+    btn.disabled = false; btn.textContent = 'Reintentar';
+    $('fallo').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    enviando = false;
   });
 
   cargarHorarios();
