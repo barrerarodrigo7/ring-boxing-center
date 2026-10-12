@@ -213,7 +213,18 @@
     letter-spacing: .04em; color: var(--error); margin-bottom: 8px;
   }
   .fallo .fallo-p { color: var(--crema-60); margin-bottom: 18px; }
-  .fallo .wa { height: 48px; font-size: 18px; padding: 0 24px; }
+  .fallo .wa {
+    display: flex; justify-content: center; width: 100%;
+    height: auto; min-height: 58px; padding: 10px 14px;
+    font-size: 17px; letter-spacing: .04em; line-height: 1.1; text-align: center; white-space: nowrap;
+  }
+  /* Con el mensaje neutro a la vista, WhatsApp es lo principal y reintentar
+     pasa a segundo plano: solo borde. */
+  .submit.secundario {
+    background: transparent; color: var(--crema); border: 1px solid var(--crema-30);
+    height: 52px; font-size: 18px; font-style: normal;
+  }
+  .submit.secundario:hover { background: transparent; border-color: var(--crema); }
 
   /* Modal */
   .modal { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; padding: 24px; }
@@ -293,9 +304,9 @@
           <div class="field"><label for="nombre">Nombre</label><input id="nombre" type="text" autocomplete="given-name"><div class="err">Escribe tu nombre</div></div>
           <div class="field"><label for="apellido">Apellido</label><input id="apellido" type="text" autocomplete="family-name"><div class="err">Escribe tu apellido</div></div>
           <div class="field"><label for="tipo_doc">Tipo de documento</label>
-            <select id="tipo_doc"><option value="">Elige</option><option value="CC">CC</option><option value="CE">CE</option><option value="Pasaporte">Pasaporte</option><option value="NIT">NIT</option></select>
-            <div class="err">Elige un tipo de documento</div></div>
-          <div class="field"><label for="num_doc">Número de documento</label><input id="num_doc" type="text" inputmode="numeric" placeholder="Sin puntos ni espacios"><div class="err">Solo números, sin espacios</div></div>
+            <select id="tipo_doc"><option value="">Elige</option><option value="CC">Cédula de ciudadanía</option><option value="CE">Cédula de extranjería</option><option value="TI">Tarjeta de identidad</option><option value="PA">Pasaporte</option><option value="PPT">Permiso por protección temporal</option></select>
+            <div class="err">Elige tu tipo de documento.</div></div>
+          <div class="field"><label for="num_doc">Número de documento</label><input id="num_doc" type="text" inputmode="numeric" placeholder="Sin puntos ni espacios"><div class="err">Escribe tu número de documento.</div></div>
           <div class="field full choice tres" id="genero_wrap">
             <label>Género</label>
             <div class="options">
@@ -309,13 +320,13 @@
           <div class="field"><label for="como_llegaste">Cómo llegaste a RING</label>
             <select id="como_llegaste"><option value="">Elige</option><option value="Instagram">Instagram</option><option value="Pagina Web">Página web</option><option value="Facebook">Facebook</option><option value="Caminando">Pasé caminando</option><option value="Referido">Me recomendaron</option></select>
             <div class="err">Cuéntanos cómo llegaste</div></div>
-          <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="email" placeholder="tu@correo.com"><div class="err">Revisa el formato del correo</div></div>
+          <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="email" placeholder="tu@correo.com"><div class="err">Escribe tu correo.</div></div>
           <div class="field"><label for="celular">Celular</label>
             <div class="phone">
               <select id="indicativo"><option value="+57">+57</option><option value="+1">+1</option><option value="+34">+34</option><option value="+52">+52</option><option value="+58">+58</option></select>
               <input id="celular" type="tel" inputmode="numeric" placeholder="3001234567">
             </div>
-            <div class="err">Solo números, entre 7 y 15 dígitos</div></div>
+            <div class="err">Escribe tu celular.</div></div>
         </div>
       </div>
 
@@ -351,10 +362,15 @@
 
       <!-- Aviso de envio no confirmado. Va dentro de #form y pegado al boton
            para que lo escrito siga delante. Oculto hasta que haga falta. -->
+      <div id="corregir" class="fallo hidden" role="alert">
+        <p class="fallo-t">Hay datos por corregir.</p>
+        <p class="fallo-p">Revisa los campos marcados en rojo y vuelve a enviar.</p>
+      </div>
+
       <div id="fallo" class="fallo hidden" role="alert">
-        <p class="fallo-t">No pudimos confirmar tu reserva.</p>
-        <p class="fallo-p">Escríbenos por WhatsApp y la completamos contigo.</p>
-        <a class="wa" id="wa_fallo" href="#" target="_blank" rel="noopener">Escribirnos por WhatsApp</a>
+        <p class="fallo-t">No pudimos completar tu registro en línea.</p>
+        <p class="fallo-p">Escríbenos por WhatsApp y te ayudamos.</p>
+        <a class="wa" id="wa_fallo" href="#" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>
       </div>
 
       <button type="button" class="submit" id="submit">Reservar mi clase</button>
@@ -509,19 +525,181 @@
     cerrarModal();
   });
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LAS REGLAS DEL CRM PARA LOS SEIS DATOS DE LA PERSONA
+  // Copia, para el navegador, de caoba-crm: lib/documento.ts, lib/contacto.ts,
+  // lib/datos-persona.ts y lib/ingesta/contrato.ts (versión del 12-oct-2026).
+  // La que manda es la del CRM. Si el CRM cambia una regla, esta copia se cambia
+  // EL MISMO DÍA en los dos formularios (CAOBA y RING): si se separan, la página
+  // dejaría pasar registros que el CRM rechaza.
+  // ═══════════════════════════════════════════════════════════════════════════
+  const TIPOS_DOCUMENTO = ['CC', 'CE', 'TI', 'PA', 'PPT'];
+
+  /** contrato.ts · texto(): recortado y con los espacios internos colapsados. */
+  function crmTexto(v) {
+    const t = String(v == null ? '' : v).trim().replace(/\s+/g, ' ');
+    return t === '' ? null : t;
+  }
+  /** documento.ts · normalizarDocumento(): solo letras y dígitos, en mayúsculas. */
+  function crmNormalizarDocumento(v) {
+    const d = String(v == null ? '' : v).replace(/[^0-9A-Za-z]/g, '').toUpperCase();
+    return d === '' ? null : d;
+  }
+  /** documento.ts · formaDocumentoValida(). */
+  function crmFormaDocumentoValida(tipo, documento) {
+    if (tipo === 'CC' || tipo === 'TI' || tipo === 'CE' || tipo === 'PPT') return /^[0-9]{6,12}$/.test(documento);
+    if (tipo === 'PA') return /^[0-9A-Z]{5,20}$/.test(documento);
+    return /^[0-9A-Z]{4,20}$/.test(documento);
+  }
+  /** contacto.ts · btrim de PostgreSQL: quita ESPACIOS, no cualquier blanco. */
+  function crmBtrim(v) { return v.replace(/^ +| +$/g, ''); }
+  /** contacto.ts · normalizarTelefono(). */
+  function crmNormalizarTelefono(v) {
+    const t = crmBtrim(v == null ? '' : String(v));
+    if (t === '' || !/^\+?[0-9 ().-]+$/.test(t)) return null;
+    const d = t.replace(/[^0-9]/g, '');
+    if (t.startsWith('+')) {
+      if (d.startsWith('57')) return /^573[0-9]{9}$/.test(d) ? '+' + d : null;
+      return /^[1-9][0-9]{7,14}$/.test(d) ? '+' + d : null;
+    }
+    if (/^3[0-9]{9}$/.test(d)) return '+57' + d;
+    if (/^573[0-9]{9}$/.test(d)) return '+' + d;
+    return null;
+  }
+  /** contacto.ts · normalizarCorreo(): recortado y en minúsculas. */
+  function crmNormalizarCorreo(v) {
+    const c = crmBtrim(v == null ? '' : String(v)).toLowerCase();
+    return c === '' ? null : c;
+  }
+  /** contacto.ts · correoValido() + el tope de 254 de contrato.ts. */
+  function crmCorreoValido(c) {
+    return c === crmBtrim(c).toLowerCase() && /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(c) && c.length <= 254;
+  }
+
+  /**
+   * Valida los seis datos como lo hace validarEnvio() del CRM y devuelve:
+   *   datos   — los valores YA normalizados, que es lo que se envía
+   *   errores — { campo: mensaje en español sencillo } solo de lo que falla
+   * Los nombres de campo son los de la PÁGINA (tipo_doc, num_doc, celular).
+   */
+  function validarPersonaComoElCrm(entrada) {
+    const errores = {};
+    const nombre = crmTexto(entrada.nombre);
+    if (!nombre) errores.nombre = 'Escribe tu nombre.';
+    else if (nombre.length > 120) errores.nombre = 'El nombre es demasiado largo (máximo 120 caracteres).';
+
+    const apellido = crmTexto(entrada.apellido);
+    if (!apellido) errores.apellido = 'Escribe tu apellido.';
+
+    const tipo = (crmTexto(entrada.tipo_doc) || '').toUpperCase();
+    if (!tipo) errores.tipo_doc = 'Elige tu tipo de documento.';
+    else if (TIPOS_DOCUMENTO.indexOf(tipo) === -1) errores.tipo_doc = 'Elige un tipo de documento de la lista.';
+
+    const docBruto = crmTexto(entrada.num_doc);
+    const documento = crmNormalizarDocumento(docBruto);
+    if (!docBruto || !documento) errores.num_doc = 'Escribe tu número de documento.';
+    else {
+      // Como el CRM: con un tipo fuera de la lista, el número se mide con la regla
+      // general (4 a 20 letras o números).
+      const tipoValido = TIPOS_DOCUMENTO.indexOf(tipo) !== -1 ? tipo : null;
+      if (!crmFormaDocumentoValida(tipoValido, documento)) {
+        errores.num_doc = tipoValido === 'PA' ? 'El pasaporte debe tener entre 5 y 20 letras o números.'
+          : tipoValido ? 'Debe tener solo números, entre 6 y 12 dígitos.'
+          : 'Debe tener entre 4 y 20 letras o números.';
+      }
+    }
+
+    // El celular llega en dos partes (indicativo + número) y el CRM lo recibe unido.
+    const numero = crmTexto(entrada.celular_numero);
+    const unido = numero ? String(entrada.indicativo || '') + numero.replace(/\s/g, '') : null;
+    const telefono = unido ? crmNormalizarTelefono(unido) : null;
+    if (!numero) errores.celular = 'Escribe tu celular.';
+    else if (!telefono) {
+      errores.celular = entrada.indicativo === '+57'
+        ? 'Escribe un celular de 10 dígitos que empiece por 3, sin el 57 adelante.'
+        : 'Revisa el número: junto con el indicativo debe tener entre 8 y 15 dígitos.';
+    }
+
+    const emailBruto = crmTexto(entrada.email);
+    const email = crmNormalizarCorreo(emailBruto);
+    if (!emailBruto || !email) errores.email = 'Escribe tu correo.';
+    else if (!crmCorreoValido(email)) errores.email = 'Revisa tu correo: debe verse como nombre@dominio.com.';
+
+    return {
+      datos: { nombre: nombre, apellido: apellido, tipo_doc: tipo, num_doc: documento, celular: telefono, email: email },
+      errores: errores,
+    };
+  }
+
+  /**
+   * Si el CRM rechaza (422), sus motivos dicen qué campo falló (el script solo
+ * deja pasar los de forma: ver MOTIVOS_DE_FORMA en el Apps Script). Se ubican debajo
+   * de su campo; lo que no sea de un campo de la persona devuelve null y la página
+   * NO confirma (avisa de que no pudo y ofrece WhatsApp).
+   */
+  function campoDelMotivoCrm(motivo) {
+    const m = String(motivo || '');
+    if (/^(Falta el tipo de documento|Tipo de documento)/.test(m)) return 'tipo_doc';
+    if (/^(Falta el documento|Documento inválido|Documento con formato inválido)/.test(m)) return 'num_doc';
+    if (/^(Falta el nombre|Nombre demasiado)/.test(m)) return 'nombre';
+    if (/^Falta el apellido/.test(m)) return 'apellido';
+    if (/^(Falta el teléfono|Teléfono inválido)/.test(m)) return 'celular';
+    if (/^(Falta el correo|Correo inválido)/.test(m)) return 'email';
+    return null;
+  }
+  // ═══════════════════════════ fin de las reglas del CRM ═══════════════════════
+
+
   // ---------- Validación ----------
   function marcar(id, ok) { $(id).closest('.field, .terms-wrap, .choice').classList.toggle('invalid', !ok); return ok; }
+  // Los seis datos: el mensaje del error se escribe debajo de cada campo.
+  const CAMPOS_PERSONA = ['nombre', 'apellido', 'tipo_doc', 'num_doc', 'email', 'celular'];
+  function entradaPersona() {
+    const v = id => $(id).value.trim();
+    return {
+      nombre: v('nombre'), apellido: v('apellido'),
+      tipo_doc: v('tipo_doc'), num_doc: v('num_doc'),
+      indicativo: v('indicativo'), celular_numero: v('celular'),
+      email: v('email'),
+    };
+  }
+  function marcarPersona(campo, mensaje) {
+    const field = $(campo).closest('.field');
+    if (mensaje) field.querySelector('.err').textContent = mensaje;
+    field.classList.toggle('invalid', !!mensaje);
+    return !mensaje;
+  }
+  /** Revisa un solo campo al salir de él. Uno vacío no se marca hasta enviar. */
+  function revisarCampo(campo) {
+    const r = validarPersonaComoElCrm(entradaPersona());
+    const yaMarcado = $(campo).closest('.field').classList.contains('invalid');
+    if (!r.errores[campo]) marcarPersona(campo, null);
+    else if ($(campo).value.trim() !== '' || yaMarcado) marcarPersona(campo, r.errores[campo]);
+  }
+  // Solo cuando se pasa a OTRO campo. Si se sale tocando el botón de enviar, no:
+  // el mensaje empujaría el botón hacia abajo y el toque caería en el vacío. Al
+  // enviar se revisa todo igual.
+  CAMPOS_PERSONA.forEach(c => $(c).addEventListener('blur', e => {
+    const destino = e.relatedTarget;
+    if (destino && /^(INPUT|SELECT|TEXTAREA)$/.test(destino.tagName)) revisarCampo(c);
+  }));
+  $('indicativo').addEventListener('change', () => { if ($('celular').value.trim() !== '') revisarCampo('celular'); });
+  // Pasaporte admite letras: el teclado del celular se adapta al tipo elegido.
+  $('tipo_doc').addEventListener('change', () => {
+    $('num_doc').setAttribute('inputmode', $('tipo_doc').value === 'PA' ? 'text' : 'numeric');
+    revisarCampo('tipo_doc');
+    if ($('num_doc').value.trim() !== '') revisarCampo('num_doc');
+  });
+  let personaLista = null;
+
   function validar() {
     let ok = true;
     const v = id => $(id).value.trim();
-    ok = marcar('nombre', v('nombre').length > 0) && ok;
-    ok = marcar('apellido', v('apellido').length > 0) && ok;
-    ok = marcar('tipo_doc', v('tipo_doc') !== '') && ok;
-    ok = marcar('num_doc', /^\d{5,15}$/.test(v('num_doc'))) && ok;
+    const persona = validarPersonaComoElCrm(entradaPersona());
+    CAMPOS_PERSONA.forEach(c => { ok = marcarPersona(c, persona.errores[c] || null) && ok; });
+    personaLista = persona.datos;
     ok = marcar('fecha_nac', v('fecha_nac') !== '' && v('fecha_nac') <= hoyISO()) && ok;
     ok = marcar('como_llegaste', v('como_llegaste') !== '') && ok;
-    ok = marcar('email', /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v('email'))) && ok;
-    ok = marcar('celular', /^\d{7,15}$/.test(v('celular'))) && ok;
     const g = state.genero !== ''; $('genero_wrap').classList.toggle('invalid', !g); ok = g && ok;
     const s = state.sede !== ''; $('sede_wrap').classList.toggle('invalid', !s); ok = s && ok;
     const d = state.dia !== ''; $('dia_wrap').classList.toggle('invalid', !d); ok = d && ok;
@@ -532,7 +710,7 @@
   }
   function hoyISO() { const t = new Date(); return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`; }
   $('fecha_nac').max = hoyISO();
-  ['num_doc', 'celular'].forEach(id => $(id).addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, ''); }));
+  $('celular').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, ''); });
 
   // ---------- Envío ----------
   //
@@ -552,25 +730,31 @@
     enviando = true;
     const btn = $('submit');
     $('fallo').classList.add('hidden');
+    $('corregir').classList.add('hidden');
+    btn.classList.remove('secundario');
     btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Enviando';
     const diaTexto = $('dia').options[$('dia').selectedIndex].text;
     const payload = {
       timestamp: new Date().toLocaleString('es-CO'),
-      nombre: $('nombre').value.trim(),
-      apellido: $('apellido').value.trim(),
-      tipo_doc: $('tipo_doc').value,
-      num_doc: $('num_doc').value.trim(),
+      nombre: personaLista.nombre,
+      apellido: personaLista.apellido,
+      tipo_doc: personaLista.tipo_doc,
+      num_doc: personaLista.num_doc,
       genero: state.genero,
       fecha_nac: $('fecha_nac').value,
-      email: $('email').value.trim(),
-      celular: $('indicativo').value + $('celular').value.trim(),
+      email: personaLista.email,
+      celular: personaLista.celular,
       como_llegaste: $('como_llegaste').value,
       sede: state.sede,
       slot: `${state.dia} ${state.hora}`,
       terminos: 'Aceptado'
     };
 
-    let guardado = false;
+    // Desde el 12-oct-2026 el script cuenta qué dijo el CRM (crm.estado):
+    //   aceptado → éxito · rechazado → se dice qué corregir · cualquier otra
+    //   cosa (incluido un script viejo que no lo cuenta) → NO se confirma.
+    let desenlace = 'sin_confirmar';
+    let motivosCrm = [];
     const corte = new AbortController();
     const reloj = setTimeout(() => corte.abort(), TOPE_MS);
     try {
@@ -582,7 +766,10 @@
       });
       if (r.ok) {
         const j = await r.json();
-        guardado = j.result === 'ok';
+        if (j && j.result === 'ok' && j.crm && typeof j.crm.estado === 'string') {
+          desenlace = j.crm.estado;
+          motivosCrm = Array.isArray(j.crm.motivos) ? j.crm.motivos : [];
+        }
       }
     } catch (e) {
       // Red caida, peticion abortada por el tope, o respuesta ilegible.
@@ -592,7 +779,31 @@
 
     const telefono = CONFIG.whatsapp[state.sede] || Object.values(CONFIG.whatsapp)[0];
 
-    if (guardado) {
+    if (desenlace === 'rechazado') {
+      const local = validarPersonaComoElCrm(entradaPersona()).errores;
+      const marcados = [];
+      motivosCrm.forEach(m => {
+        const c = campoDelMotivoCrm(m);
+        if (c && marcados.indexOf(c) === -1) {
+          marcados.push(c);
+          marcarPersona(c, local[c] || 'Revisa este dato: no lo pudimos aceptar.');
+        }
+      });
+      // Solo si TODOS los motivos son de un campo. Si alguno no lo es, no se
+      // marca nada y sale el mensaje neutro.
+      const todosDeCampo = motivosCrm.length > 0 && motivosCrm.every(m => !!campoDelMotivoCrm(m));
+      if (!todosDeCampo) marcados.forEach(c => marcarPersona(c, null));
+      if (todosDeCampo && marcados.length > 0) {
+        $('corregir').classList.remove('hidden');
+        btn.disabled = false; btn.textContent = 'Enviar de nuevo';
+        $(marcados[0]).closest('.field').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        enviando = false;
+        return;
+      }
+      // Rechazado por algo que no es un dato de la persona: no se confirma.
+    }
+
+    if (desenlace === 'aceptado') {
       $('resumen').innerHTML = `<span>Sede</span><span>${state.sede}</span><span>Día</span><span>${diaTexto}</span><span>Hora</span><span>${state.hora}</span>`;
       const msg = encodeURIComponent(`Hola RING, soy ${payload.nombre} ${payload.apellido}. Reservé mi clase de prueba en ${state.sede} el ${diaTexto} a las ${state.hora}.`);
       $('wa_link').href = `https://wa.me/${telefono}?text=${msg}`;
@@ -608,7 +819,7 @@
     const msgFallo = encodeURIComponent(`Hola RING, soy ${payload.nombre} ${payload.apellido}. Intenté reservar clase de prueba en ${state.sede} el ${diaTexto} a las ${state.hora}, pero la página NO pudo confirmar mi registro. ¿Me ayudan a completarlo?`);
     $('wa_fallo').href = `https://wa.me/${telefono}?text=${msgFallo}`;
     $('fallo').classList.remove('hidden');
-    btn.disabled = false; btn.textContent = 'Reintentar';
+    btn.disabled = false; btn.textContent = 'Reintentar'; btn.classList.add('secundario');
     $('fallo').scrollIntoView({ behavior: 'smooth', block: 'center' });
     enviando = false;
   });
