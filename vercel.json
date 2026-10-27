@@ -1,0 +1,14 @@
+{
+  "redirects": [
+    {
+      "source": "/registro",
+      "destination": "https://registro.caobafitness.com/ring",
+      "statusCode": 307
+    },
+    {
+      "source": "/registro/(.*)",
+      "destination": "https://registro.caobafitness.com/ring",
+      "statusCode": 307
+    }
+  ]
+}
